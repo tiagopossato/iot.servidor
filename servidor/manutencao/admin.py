@@ -21,3 +21,5 @@ class LogAdmin(admin.ModelAdmin):
             return True
 
 admin.site.register(Log, LogAdmin)
+admin.site.site_header = 'Administração do Servidor'
+admin.site.site_title = 'SC01'

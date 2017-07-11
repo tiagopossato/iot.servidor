@@ -4,10 +4,10 @@ from mqtt.models import User
 from mqtt.models import Acl
 
 class UserAdmin(admin.ModelAdmin):
-    list_display = ('username','pw','super',)
-    #readonly_fields = ('',)
-    ordering = ('username',)
-    list_filter = ('username',)
+    list_display = ('username','super',)
+    #readonly_fields = ('username','pw', 'super','publickey',)
+    ordering = ('username','super',)
+    list_filter = ('username','super',)
 
 class AclAdmin(admin.ModelAdmin):
     list_display = ('username','topic','rw',)

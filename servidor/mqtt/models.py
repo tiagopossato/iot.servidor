@@ -3,12 +3,13 @@ from django.db import models
 
 class User(models.Model):
     username = models.CharField("Usuário",unique=True, max_length=255)
-    pw = models.CharField("Senha", max_length=255)
+    pw = models.CharField("Senha", max_length=255, null=True, blank=True)
+    publickey = models.CharField("Chave pública", max_length=300, null=True, blank=True)
     super = models.BooleanField("Super usuário", default=False)
 
     class Meta:
         verbose_name = 'Usuario'
-        verbose_name_plural = 'Usuario'
+        verbose_name_plural = 'Usuarios'
     
     def __str__(self):
         return self.username

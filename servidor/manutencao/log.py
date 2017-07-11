@@ -2,7 +2,6 @@
 """
 import datetime
 import time
-#from unidecode import unidecode
 import unicodedata
 from manutencao.models import Log
 
