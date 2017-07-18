@@ -26,19 +26,22 @@ def onConnect(client, userdata, flags, rc):
 def onMessage(client, userdata, msg):
     try:
         topico = msg.topic
-        usuario = msg.topic.split('/')[-1]
+        #usuario = msg.topic.split('/')[-1]
         packet = msg.payload.decode('utf-8')
-        #print(topico + ": " + packet)
-        res, message = verificaAssinatura(usuario, packet)
-        if(res):
-            print(message)
+#        print(topico + ": " + packet)
+        message = eval(packet)
+        print(message)
+        #res, message = verificaAssinatura(usuario, packet)
+        #if(res):
+        #    print(message)
 
     except Exception as e:
         print(e)
 
 def onDisconnect(client, userdata, rc):
-    print("Até a próxima\n")
-    exit()
+    client.reconnect()
+    #print("Até a próxima\n")
+    #exit()
 
 
 def verificaAssinatura(username, packet):
