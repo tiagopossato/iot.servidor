@@ -39,4 +39,4 @@ def revogaCertificado(nomeCertificado, razao=5):
             return False
     pass
 
-revogaCertificado(nomeCertificado='testeq3')
+criaCertificado(nomeCertificado="teste4", nomeCliente="teste4")

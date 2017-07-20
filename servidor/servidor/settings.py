@@ -27,6 +27,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+AUTH_USER_MODEL = 'sentinela.User'
+
 
 # Application definition
 
@@ -37,8 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'mqtt',
+    # 'mqtt',
     'manutencao',
+    'sentinela',
 ]
 
 MIDDLEWARE = [
@@ -78,7 +81,7 @@ WSGI_APPLICATION = 'servidor.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'sentinela-dev',
+        'NAME': 'sentinela-dev1',
         'USER': 'sistema',
         'PASSWORD': 'sistema',
         'HOST': '127.0.0.1',
