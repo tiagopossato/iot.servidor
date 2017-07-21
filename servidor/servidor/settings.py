@@ -23,12 +23,17 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'p50=e883xpm4m^molbyz-6-0jd3*g$p5k(#fbny5xna@m-9%3o'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '[::1]',
+    '127.0.0.1',
+    'localhost',
+]
 
 AUTH_USER_MODEL = 'sentinela.User'
 
+SSL_DIR = "/etc/ssl/servidor/"
 
 # Application definition
 

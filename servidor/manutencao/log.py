@@ -10,7 +10,7 @@ Salva um log na tabela de logs
 """
 def log(_tipo, _mensagem):
     try:
-        lg = Log(mensagem=_mensagem, tipo = _tipo)
+        lg = Log(mensagem=str(_mensagem), tipo = str(_tipo))
         lg.save()
         print('['+ datetime.datetime.fromtimestamp(time.time()).strftime('%d-%m-%Y %H:%M:%S')
     + '] [' + _tipo + '] [' + _mensagem + ']')

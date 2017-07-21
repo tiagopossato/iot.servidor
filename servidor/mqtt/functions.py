@@ -38,5 +38,3 @@ def revogaCertificado(nomeCertificado, razao=5):
             print(e.returncode)
             return False
     pass
-
-criaCertificado(nomeCertificado="teste4", nomeCliente="teste4")

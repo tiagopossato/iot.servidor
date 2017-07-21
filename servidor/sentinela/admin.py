@@ -38,12 +38,12 @@ class UserAdmin(BaseUserAdmin):
     inlines = (TelefoneUsuarioInline, EnderecoUsuarioInline,)
 
 class CentralAdmin(admin.ModelAdmin):
-    list_display = ('nome','id',)
-    readonly_fields = ('id','created_at',)
+    list_display = ('descricao','id',)
+    readonly_fields = ('id','created_at','certificado',)
 
 class CertificadoAdmin(admin.ModelAdmin):
     list_display = ('certName','is_revoked',)
-    readonly_fields = ('certName','keyName','created_at',)
+    readonly_fields = ('clientName','certName','created_at',)
     
 admin.site.register(User, UserAdmin)
 admin.site.register(Empresa, EmpresaAdmin)

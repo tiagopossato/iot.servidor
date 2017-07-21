@@ -2,6 +2,11 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils.timezone import now
+from manutencao.log import log
+import subprocess
+from subprocess import CalledProcessError
+from django.conf import settings
+
 
 class User(AbstractUser):
     pass
@@ -35,13 +40,13 @@ class Telefone(models.Model):
         return self.numero  
 
 class TelefoneUsuario(Telefone):
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    usuario = models.ForeignKey(User, on_delete=models.PROTECT)
     class Meta:
         verbose_name = 'Telefone'
         verbose_name_plural = 'Telefones'
 
 class TelefoneEmpresa(Telefone):
-    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE)   
+    empresa = models.ForeignKey(Empresa, on_delete=models.PROTECT)   
     class Meta:
         verbose_name = 'Telefone'
         verbose_name_plural = 'Telefones'
@@ -52,44 +57,114 @@ class Endereco(models.Model):
         return self.logradouro
 
 class EnderecoEmpresa(Endereco):
-    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE)
+    empresa = models.ForeignKey(Empresa, on_delete=models.PROTECT)
     class Meta:
         verbose_name = 'Endereço'
         verbose_name_plural = 'Endereços'
 
 class EnderecoUsuario(Endereco):
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    usuario = models.ForeignKey(User, on_delete=models.PROTECT)
     class Meta:
         verbose_name = 'Endereço'
         verbose_name_plural = 'Endereços'
 
 class Certificado(models.Model):
-    certName = models.FilePathField(path='/etc/ssl/servidor/certs')
-    keyName = models.FilePathField(path='/etc/ssl/servidor/private')
+    certName = models.CharField(max_length=255, null=False)
+    clientName = models.CharField(max_length=50)
     is_revoked = models.BooleanField("Revogado", default=False)
     created_at = models.DateTimeField(default=now)
     updated_at = models.DateTimeField(auto_now=True)
+    
     def __str__(self):
-        return self.certName + "[Revogado]" if(self.is_revoked) else ""
+        # return self.certName
+        return self.certName + (" [Revogado]" if(self.is_revoked) else "")
+
+    def save(self, *args, **kwargs):
+        """
+        Método sobrescrito para criar o certificado antes de salvar
+        """
+        try:
+            nomes = uuid.uuid4().hex
+            self.certName = nomes
+            self.keyName = nomes
+            subprocess.check_call([settings.SSL_DIR+"/bin/create-client", "-n", str(self.certName), "-c", str(self.clientName)])
+            # Chama o método real
+            super(Certificado, self).save(*args, **kwargs)
+        except CalledProcessError as e:
+            if(e.returncode == 1):
+                log("CERT01.0","Ja existe um certificado com este nome")
+                raise
+            elif(e.returncode == 2):
+                log("CERT01.1","Argumentos incorretos: " + str(e.cmd))
+                raise
+            else:
+                print()
+                print(e.output.decode())
+                print(e.returncode)
+                raise
+        except Exception as e:
+            log("CERT01.2",str(e))
+            raise
+
+    def getCertFile(self):
+        try:
+            return open(settings.SSL_DIR + "/certs/" + self.certName+ ".client.crt").read()
+        except Exception as e:
+            log("CERT02.0",str(e))
+    
+    def getKeyFile(self):
+        try:
+            return open(settings.SSL_DIR + "/private/" + self.certName+ ".client.key").read()
+        except Exception as e:
+            log("CERT02.1",str(e))
+
+    def getCaFile(self):
+        try:
+            return open(settings.SSL_DIR + "/ca/ca.crt").read()
+        except Exception as e:
+            log("CERT02.2",str(e))
 
 class Central(models.Model):
     """
     Modelo para representar as centrais do sistema
     """
-    id = models.UUIDField("Identificador",primary_key=True, default=uuid.uuid4)
-    nome = models.CharField(max_length=255, default='')
-    certificado = models.ForeignKey(Certificado, on_delete=models.CASCADE)
+    id = models.UUIDField("Identificador", primary_key=True, default=uuid.uuid4)
+    descricao = models.CharField("Descrição", max_length=255, default='')
     # Campos de controle
     is_active = models.BooleanField("Ativa",default=True)
     created_at = models.DateTimeField("Cadastrado em",default=now)
     updated_at = models.DateTimeField(auto_now=True)
 
     # Relacionamentos
-    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE)
+    certificado = models.ForeignKey(Certificado, on_delete=models.PROTECT)
+    empresa = models.ForeignKey(Empresa, on_delete=models.PROTECT, null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        """
+        Método sobrescrito para criar o certificado antes de salvar
+        """
+        try:
+            if(self.certificado_id == None):
+                c = Certificado(clientName=self.id)
+                c.save()
+                self.certificado_id = c.id
+            # Chama o método real
+            print("Salvando central")
+            super(Central, self).save(*args, **kwargs)
+        except Exception as e:
+            log('NCE01.0',str(e))
 
     def __str__(self):
-        return self.nome
+        return self.descricao
 
     class Meta:
         verbose_name = 'Central'
         verbose_name_plural = 'Centrais'
+
+    def toJSON(self):
+        j = {}
+        j['id'] = self.id
+        j['caFile'] = self.certificado.getCaFile()
+        j['certFile'] = self.certificado.getCertFile()
+        j['keyFile'] = self.certificado.getKeyFile()
+        return j

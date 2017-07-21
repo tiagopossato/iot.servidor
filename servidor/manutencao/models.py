@@ -1,7 +1,7 @@
 from django.db import models
 
 class Log(models.Model):
-    tipo = models.CharField(max_length=6)
+    tipo = models.CharField(max_length=12)
     mensagem = models.CharField(max_length=255)
     sync = models.BooleanField(default=False)
     tempo = models.DateTimeField(auto_now=True)
