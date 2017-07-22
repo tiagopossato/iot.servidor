@@ -7,7 +7,6 @@ import subprocess
 from subprocess import CalledProcessError
 from django.conf import settings
 
-
 class User(AbstractUser):
     pass
 
@@ -69,11 +68,11 @@ class EnderecoUsuario(Endereco):
         verbose_name_plural = 'Endereços'
 
 class Certificado(models.Model):
-    certName = models.CharField(max_length=255, null=False)
-    clientName = models.CharField(max_length=50)
+    certName = models.CharField("Nome", max_length=255, null=False)
+    clientName = models.CharField("Cliente", max_length=50)
     is_revoked = models.BooleanField("Revogado", default=False)
-    created_at = models.DateTimeField(default=now)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField("Criado em", default=now)
+    updated_at = models.DateTimeField("Alterado em", auto_now=True)
     
     def __str__(self):
         # return self.certName
@@ -84,10 +83,11 @@ class Certificado(models.Model):
         Método sobrescrito para criar o certificado antes de salvar
         """
         try:
-            nomes = uuid.uuid4().hex
-            self.certName = nomes
-            self.keyName = nomes
-            subprocess.check_call([settings.SSL_DIR+"/bin/create-client", "-n", str(self.certName), "-c", str(self.clientName)])
+            # Verifica se é para criar um novo certificado
+            if(len(self.certName) == 0):
+                self.certName = uuid.uuid4().hex
+                subprocess.check_call([settings.SSL_DIR+"/bin/create-client", "-n", str(self.certName), "-c", str(self.clientName)])
+
             # Chama o método real
             super(Certificado, self).save(*args, **kwargs)
         except CalledProcessError as e:
@@ -105,6 +105,36 @@ class Certificado(models.Model):
         except Exception as e:
             log("CERT01.2",str(e))
             raise
+
+    def delete(self, *args, **kwargs):
+        try:
+            self.revoke()            
+            super(Certificado, self).delete(*args, **kwargs)
+        except Exception as e:
+            log("CERT03.0",str(e))
+
+    def revoke(self):
+        """
+        Revoga o certificado
+        """
+        try:
+            razao = 5
+            subprocess.check_call([settings.SSL_DIR+"/bin/revoke-cert", "-c", settings.SSL_DIR+"/certs/"+str(self.certName)+".client.crt", "-r", str(razao)])
+            self.is_revoked = True
+            self.save()
+            return True
+        except CalledProcessError as e:
+            if(e.returncode == 1):
+                print("Nao pode encontrar um certificado com este nome. " + str(e.output.decode()))    
+                raise
+            elif(e.returncode == 2):
+                print("Argumentos incorretos: " + str(e.cmd))
+                raise
+            else:
+                print()
+                print(e.output.decode())
+                print(e.returncode)
+                raise
 
     def getCertFile(self):
         try:
@@ -149,15 +179,22 @@ class Central(models.Model):
                 c.save()
                 self.certificado_id = c.id
             # Chama o método real
-            print("Salvando central")
             super(Central, self).save(*args, **kwargs)
         except Exception as e:
             log('NCE01.0',str(e))
+
+    def delete(self, *args, **kwargs):
+        try:
+            self.certificado.revoke()
+            super(Central, self).delete(*args, **kwargs)
+        except Exception as e:
+            log("NCE02.0",str(e))
 
     def __str__(self):
         return self.descricao
 
     class Meta:
+        unique_together = ('descricao', 'empresa',)
         verbose_name = 'Central'
         verbose_name_plural = 'Centrais'
 

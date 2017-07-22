@@ -42,9 +42,19 @@ class CentralAdmin(admin.ModelAdmin):
     readonly_fields = ('id','created_at','certificado',)
 
 class CertificadoAdmin(admin.ModelAdmin):
-    list_display = ('certName','is_revoked',)
-    readonly_fields = ('clientName','certName','created_at',)
-    
+    list_display = ('certName','is_revoked','created_at','updated_at',)
+    readonly_fields = ('certName','is_revoked','clientName','created_at',)
+    list_filter = ('is_revoked',)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        if(obj and obj.is_revoked):
+            return True
+        else:
+            return False
+
 admin.site.register(User, UserAdmin)
 admin.site.register(Empresa, EmpresaAdmin)
 admin.site.register(Central, CentralAdmin)
