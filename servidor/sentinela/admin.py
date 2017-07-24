@@ -38,11 +38,11 @@ class UserAdmin(BaseUserAdmin):
     inlines = (TelefoneUsuarioInline, EnderecoUsuarioInline,)
 
 class CentralAdmin(admin.ModelAdmin):
-    list_display = ('descricao','id',)
-    readonly_fields = ('id','created_at','certificado',)
+    list_display = ('descricao','id','certificado','is_active',)
+    readonly_fields = ('id','created_at','certificado',)    
 
 class CertificadoAdmin(admin.ModelAdmin):
-    list_display = ('certName','is_revoked','created_at','updated_at',)
+    list_display = ('certName','clientName', 'is_revoked','created_at','updated_at',)
     readonly_fields = ('certName','is_revoked','clientName','created_at',)
     list_filter = ('is_revoked',)
 

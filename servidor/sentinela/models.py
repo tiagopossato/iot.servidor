@@ -174,11 +174,15 @@ class Central(models.Model):
         Método sobrescrito para criar o certificado antes de salvar
         """
         try:
+            # Verifica se deve criar um novo certificado
             if(self.certificado_id == None):
                 c = Certificado(clientName=self.id)
                 c.save()
                 self.certificado_id = c.id
-            # Chama o método real
+            # Verifica se a central está sendo desativa e revoga o certificado
+            if(self.is_active == False and self.certificado.is_revoked == False):
+                self.certificado.revoke()
+            # Chama o método real           
             super(Central, self).save(*args, **kwargs)
         except Exception as e:
             log('NCE01.0',str(e))
@@ -201,6 +205,7 @@ class Central(models.Model):
     def toJSON(self):
         j = {}
         j['id'] = self.id
+        j['empresa'] = self.empresa.nome if self.empresa else None
         j['caFile'] = self.certificado.getCaFile()
         j['certFile'] = self.certificado.getCertFile()
         j['keyFile'] = self.certificado.getKeyFile()
