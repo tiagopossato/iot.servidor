@@ -205,6 +205,7 @@ class Central(models.Model):
     def toJSON(self):
         j = {}
         j['id'] = self.id
+        j['descricao'] = self.descricao if self.descricao else None
         j['empresa'] = self.empresa.nome if self.empresa else None
         j['caFile'] = self.certificado.getCaFile()
         j['certFile'] = self.certificado.getCertFile()
