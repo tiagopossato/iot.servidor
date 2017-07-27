@@ -7,11 +7,9 @@ from django.contrib.auth import authenticate
 from django.http import JsonResponse
 from django.http import HttpResponseNotAllowed
 from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from manutencao.log import log
 from sentinela.models import Central, Certificado
-
-# Create your views here.
-from django.views.decorators.csrf import csrf_exempt
 
 @method_decorator(csrf_exempt, name='dispatch')
 def nova_central(request):
@@ -29,26 +27,62 @@ def nova_central(request):
         if(descricao == None):
             raise KeyError('descricao')
         if(len(descricao)<2):
-            return JsonResponse({'erro': "Descrição muito curta"})
+            return JsonResponse(status=400, data={'erro': "Descrição muito curta"})
     except KeyError as e:
         print(e)
-        return JsonResponse({'erro': "Parâmetro " + str(e) + " não recebido"})
+        return JsonResponse(status=400, data={'erro': "Parâmetro " + str(e) + " não recebido"})
     
     # Autenticação
     try:
         user = authenticate(request, username=username, password=password)
         if user is None:
-            return JsonResponse({'erro': "Usuário não autorizado"})
+            return JsonResponse(status=400, data={'erro': "Usuário não autorizado"})
     except Exception as e:
-        return JsonResponse({'erro': str(e)})
+        return JsonResponse(status=400, data={'erro': str(e)})
 
     try:
         central = Central(descricao=descricao)
         central.save()
         return JsonResponse(central.toJSON())
     except Exception as e:
-        return JsonResponse({'erro': str(e)})
+        return JsonResponse(status=400, data={'erro': str(e)})
 
+@method_decorator(csrf_exempt, name='dispatch')
+def editar(request, central_id):
+
+    if(request.method != 'POST'):
+        return HttpResponseNotAllowed(['POST'])
+    try:
+        username = request.POST.get('username')
+        if(username == None):
+            raise KeyError('username')
+        password = request.POST.get('password')
+        if(password == None):
+            raise KeyError('password')
+        descricao = request.POST.get('descricao')
+        if(descricao == None):
+            raise KeyError('descricao')
+        if(len(descricao)<2):
+            return JsonResponse(status=400, data={'erro': "Descrição muito curta"})
+    except KeyError as e:
+        print(e)
+        return JsonResponse(status=400, data={'erro': "Parâmetro " + str(e) + " não recebido"})
+    
+    # Autenticação
+    try:
+        user = authenticate(request, username=username, password=password)
+        if user is None:
+            return JsonResponse(status=400, data={'erro': "Usuário não autorizado"})
+    except Exception as e:
+        return JsonResponse(status=400, data={'erro': str(e)})
+
+    try:
+        central = Central.objects.get(id=central_id, is_active=True)
+        central.descricao = descricao
+        central.save()
+        return JsonResponse(status=200, data={})
+    except Exception as e:
+        return JsonResponse(status=400, data={'erro': str(e)})
 
 def novo_certificado(request, central_id):
     if(request.method != 'GET'):
@@ -62,15 +96,15 @@ def novo_certificado(request, central_id):
             raise KeyError('password')    
     except KeyError as e:
         print(e)
-        return JsonResponse({'erro': "Parâmetro " + str(e) + " não recebido"})
+        return JsonResponse(status=400, data={'erro': "Parâmetro " + str(e) + " não recebido"})
 
     # Autenticação
     try:
         user = authenticate(request, username=username, password=password)
         if user is None:
-            return JsonResponse({'erro': "Usuário não autorizado"})
+            return JsonResponse(status=400, data={'erro': "Usuário não autorizado"})
     except Exception as e:
-        return JsonResponse({'erro': str(e)})
+        return JsonResponse(status=400, data={'erro': str(e)})
 
     # Responde com o resultado do método para trocar o certificado
     return troca_certificado(central_id)
@@ -83,9 +117,9 @@ def troca_certificado(central_id):
     try:
         central = Central.objects.get(id=central_id, is_active=True)
     except Central.DoesNotExist:
-        return JsonResponse({'erro': "Central não encontrada ou inativa"})      
+        return JsonResponse(status=400, data={'erro': "Central não encontrada ou inativa"})      
     except Exception as e:
-        return JsonResponse({'erro': str(e)})
+        return JsonResponse(status=400, data={'erro': str(e)})
    
     # Gera novo certificado
     try:
@@ -101,7 +135,7 @@ def troca_certificado(central_id):
         return JsonResponse(central.toJSON())
     except Exception as e:
         log('CENV02.0', str(e))
-        return JsonResponse({'erro': str(e)})
+        return JsonResponse(status=400, data={'erro': str(e)})
     pass
 
 def inativas(request):
@@ -150,14 +184,14 @@ def inativar(request, central_id):
             raise KeyError('password')
     except KeyError as e:
         print(e)
-        return JsonResponse({'erro': "Parâmetro " + str(e) + " não recebido"})    
+        return JsonResponse(status=400, data={'erro': "Parâmetro " + str(e) + " não recebido"})    
     # Autenticação
     try:
         user = authenticate(request, username=username, password=password)
         if user is None:
-            return JsonResponse({'erro': "Usuário não autorizado"})
+            return JsonResponse(status=400, data={'erro': "Usuário não autorizado"})
     except Exception as e:
-        return JsonResponse({'erro': str(e)})
+        return JsonResponse(status=400, data={'erro': str(e)})
 
     try:
         central = Central.objects.get(id=central_id, is_active=True)
@@ -165,9 +199,9 @@ def inativar(request, central_id):
         central.save()
         return JsonResponse({'sucesso':'A central foi inativada'})
     except Central.DoesNotExist:
-        return JsonResponse({'erro':'nenhuma central ativa com esse identificador'})
+        return JsonResponse(status=400, data={'erro':'nenhuma central ativa com esse identificador'})
     except Exception as e:
-        return JsonResponse({'erro': str(e)})
+        return JsonResponse(status=400, data={'erro': str(e)})
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -183,14 +217,14 @@ def reativar(request, central_id):
             raise KeyError('password')
     except KeyError as e:
         print(e)
-        return JsonResponse({'erro': "Parâmetro " + str(e) + " não recebido"})    
+        return JsonResponse(status=400, data={'erro': "Parâmetro " + str(e) + " não recebido"})    
     # Autenticação
     try:
         user = authenticate(request, username=username, password=password)
         if user is None:
-            return JsonResponse({'erro': "Usuário não autorizado"})
+            return JsonResponse(status=400, data={'erro': "Usuário não autorizado"})
     except Exception as e:
-        return JsonResponse({'erro': str(e)})
+        return JsonResponse(status=400, data={'erro': str(e)})
 
     try:
         central = Central.objects.get(id=central_id, is_active=False)
@@ -198,6 +232,6 @@ def reativar(request, central_id):
         central.save()
         return troca_certificado(central_id)
     except Central.DoesNotExist:
-        return JsonResponse({'erro':'nenhuma central inativa com esse identificador'})
+        return JsonResponse(status=400, data={'erro':'nenhuma central inativa com esse identificador'})
     except Exception as e:
-        return JsonResponse({'erro': str(e)})
+        return JsonResponse(status=400, data={'erro': str(e)})

@@ -29,6 +29,7 @@ ALLOWED_HOSTS = [
     '[::1]',
     '127.0.0.1',
     'localhost',
+    'mqtt-hub.nectar.videira.ifc.edu.br',
 ]
 
 AUTH_USER_MODEL = 'sentinela.User'
