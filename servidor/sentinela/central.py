@@ -43,7 +43,8 @@ def nova_central(request):
     try:
         central = Central(descricao=descricao)
         central.save()
-        return JsonResponse(central.toJSON())
+        return novo_certificado(central)
+        # return JsonResponse(central.toJSON())
     except Exception as e:
         return JsonResponse(status=400, data={'erro': str(e)})
 
@@ -84,7 +85,7 @@ def editar(request, central_id):
     except Exception as e:
         return JsonResponse(status=400, data={'erro': str(e)})
 
-def novo_certificado(request, central_id):
+def troca_certificado(request, central_id):
     if(request.method != 'GET'):
         return HttpResponseNotAllowed(['GET'])
     try:
@@ -106,31 +107,30 @@ def novo_certificado(request, central_id):
     except Exception as e:
         return JsonResponse(status=400, data={'erro': str(e)})
 
-    # Responde com o resultado do método para trocar o certificado
-    return troca_certificado(central_id)
-
-def troca_certificado(central_id):
-    """
-    Método que revoga o certificado atual e gera um novo certificado para a central
-    """
     # Verifica existência da central
     try:
         central = Central.objects.get(id=central_id, is_active=True)
+        # Revoga certificao antigo
+        central.certificado.revoke()
+        # Responde com o resultado do método para gerar o certificado
+        return novo_certificado(central)
     except Central.DoesNotExist:
         return JsonResponse(status=400, data={'erro': "Central não encontrada ou inativa"})      
     except Exception as e:
         return JsonResponse(status=400, data={'erro': str(e)})
-   
+
+def novo_certificado(central):
+    """
+    Método que gera um novo certificado para a central
+    """
     # Gera novo certificado
     try:
         nc = Certificado(clientName=central.id)
         nc.save()
-        # Revoga certificao antigo
-        central.certificado.revoke()
         # Associa novo certificado
         central.certificado_id = nc.id
         central.save()
-        central = Central.objects.get(id=central_id)
+        central = Central.objects.get(id=central.id)
         # Retorna com a nova estrutura da central
         return JsonResponse(central.toJSON())
     except Exception as e:
@@ -138,7 +138,7 @@ def troca_certificado(central_id):
         return JsonResponse(status=400, data={'erro': str(e)})
     pass
 
-def inativas(request):
+def get_centrais_inativas(request):
     if(request.method != 'GET'):
         return HttpResponseNotAllowed(['GET'])
     try:
@@ -230,7 +230,7 @@ def reativar(request, central_id):
         central = Central.objects.get(id=central_id, is_active=False)
         central.is_active = True
         central.save()
-        return troca_certificado(central_id)
+        return novo_certificado(central)
     except Central.DoesNotExist:
         return JsonResponse(status=400, data={'erro':'nenhuma central inativa com esse identificador'})
     except Exception as e:

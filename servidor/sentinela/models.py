@@ -174,11 +174,11 @@ class Central(models.Model):
         Método sobrescrito para criar o certificado antes de salvar
         """
         try:
-            # Verifica se deve criar um novo certificado
-            if(self.certificado_id == None):
-                c = Certificado(clientName=self.id)
-                c.save()
-                self.certificado_id = c.id
+            # # Verifica se deve criar um novo certificado
+            # if(self.certificado_id == None):
+            #     c = Certificado(clientName=self.id)
+            #     c.save()
+            #     self.certificado_id = c.id
             # Verifica se a central está sendo desativa e revoga o certificado
             if(self.is_active == False and self.certificado.is_revoked == False):
                 self.certificado.revoke()
