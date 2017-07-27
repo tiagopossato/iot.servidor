@@ -6,6 +6,7 @@ from manutencao.log import log
 import subprocess
 from subprocess import CalledProcessError
 from django.conf import settings
+from os import remove
 
 class User(AbstractUser):
     pass
@@ -122,6 +123,7 @@ class Certificado(models.Model):
             subprocess.check_call([settings.SSL_DIR+"/bin/revoke-cert", "-c", settings.SSL_DIR+"/certs/"+str(self.certName)+".client.crt", "-r", str(razao)])
             self.is_revoked = True
             self.save()
+            remove(settings.SSL_DIR+"/certs/"+str(self.certName)+".client.crt")
             return True
         except CalledProcessError as e:
             if(e.returncode == 1):
@@ -144,9 +146,12 @@ class Certificado(models.Model):
     
     def getKeyFile(self):
         try:
-            return open(settings.SSL_DIR + "/private/" + self.certName+ ".client.key").read()
+            keyFile = open(settings.SSL_DIR + "/private/" + self.certName+ ".client.key").read()
+            remove(settings.SSL_DIR + "/private/" + self.certName+ ".client.key")
+            return keyFile
         except Exception as e:
             log("CERT02.1",str(e))
+            return None
 
     def getCaFile(self):
         try:
@@ -174,12 +179,6 @@ class Central(models.Model):
         Método sobrescrito para criar o certificado antes de salvar
         """
         try:
-            # # Verifica se deve criar um novo certificado
-            # if(self.certificado_id == None):
-            #     c = Certificado(clientName=self.id)
-            #     c.save()
-            #     self.certificado_id = c.id
-            # Verifica se a central está sendo desativa e revoga o certificado
             if(self.is_active == False and self.certificado.is_revoked == False):
                 self.certificado.revoke()
             # Chama o método real           
@@ -201,13 +200,3 @@ class Central(models.Model):
         unique_together = ('descricao', 'empresa',)
         verbose_name = 'Central'
         verbose_name_plural = 'Centrais'
-
-    def toJSON(self):
-        j = {}
-        j['id'] = self.id
-        j['descricao'] = self.descricao if self.descricao else None
-        j['empresa'] = self.empresa.nome if self.empresa else None
-        j['caFile'] = self.certificado.getCaFile()
-        j['certFile'] = self.certificado.getCertFile()
-        j['keyFile'] = self.certificado.getKeyFile()
-        return j

@@ -11,6 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from manutencao.log import log
 from sentinela.models import Central, Certificado
 
+
 @method_decorator(csrf_exempt, name='dispatch')
 def nova_central(request):
 
@@ -26,12 +27,12 @@ def nova_central(request):
         descricao = request.POST.get('descricao')
         if(descricao == None):
             raise KeyError('descricao')
-        if(len(descricao)<2):
+        if(len(descricao) < 2):
             return JsonResponse(status=400, data={'erro': "Descrição muito curta"})
     except KeyError as e:
         print(e)
         return JsonResponse(status=400, data={'erro': "Parâmetro " + str(e) + " não recebido"})
-    
+
     # Autenticação
     try:
         user = authenticate(request, username=username, password=password)
@@ -44,9 +45,9 @@ def nova_central(request):
         central = Central(descricao=descricao)
         central.save()
         return novo_certificado(central)
-        # return JsonResponse(central.toJSON())
     except Exception as e:
         return JsonResponse(status=400, data={'erro': str(e)})
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 def editar(request, central_id):
@@ -63,12 +64,12 @@ def editar(request, central_id):
         descricao = request.POST.get('descricao')
         if(descricao == None):
             raise KeyError('descricao')
-        if(len(descricao)<2):
+        if(len(descricao) < 2):
             return JsonResponse(status=400, data={'erro': "Descrição muito curta"})
     except KeyError as e:
         print(e)
         return JsonResponse(status=400, data={'erro': "Parâmetro " + str(e) + " não recebido"})
-    
+
     # Autenticação
     try:
         user = authenticate(request, username=username, password=password)
@@ -85,6 +86,7 @@ def editar(request, central_id):
     except Exception as e:
         return JsonResponse(status=400, data={'erro': str(e)})
 
+
 def troca_certificado(request, central_id):
     if(request.method != 'GET'):
         return HttpResponseNotAllowed(['GET'])
@@ -92,9 +94,9 @@ def troca_certificado(request, central_id):
         username = request.GET.get('username')
         if(username == None):
             raise KeyError('username')
-        password = request.GET.get('password') 
+        password = request.GET.get('password')
         if(password == None):
-            raise KeyError('password')    
+            raise KeyError('password')
     except KeyError as e:
         print(e)
         return JsonResponse(status=400, data={'erro': "Parâmetro " + str(e) + " não recebido"})
@@ -115,9 +117,10 @@ def troca_certificado(request, central_id):
         # Responde com o resultado do método para gerar o certificado
         return novo_certificado(central)
     except Central.DoesNotExist:
-        return JsonResponse(status=400, data={'erro': "Central não encontrada ou inativa"})      
+        return JsonResponse(status=400, data={'erro': "Central não encontrada ou inativa"})
     except Exception as e:
         return JsonResponse(status=400, data={'erro': str(e)})
+
 
 def novo_certificado(central):
     """
@@ -132,11 +135,19 @@ def novo_certificado(central):
         central.save()
         central = Central.objects.get(id=central.id)
         # Retorna com a nova estrutura da central
-        return JsonResponse(central.toJSON())
+        j = {}
+        j['id'] = central.id
+        j['descricao'] = central.descricao if central.descricao else None
+        j['empresa'] = central.empresa.nome if central.empresa else None
+        j['caFile'] = central.certificado.getCaFile()
+        j['certFile'] = central.certificado.getCertFile()
+        j['keyFile'] = central.certificado.getKeyFile()
+        return JsonResponse(status=200, data=j)
     except Exception as e:
         log('CENV02.0', str(e))
         return JsonResponse(status=400, data={'erro': str(e)})
     pass
+
 
 def get_centrais_inativas(request):
     if(request.method != 'GET'):
@@ -145,9 +156,9 @@ def get_centrais_inativas(request):
         username = request.GET.get('username')
         if(username == None):
             raise KeyError('username')
-        password = request.GET.get('password') 
+        password = request.GET.get('password')
         if(password == None):
-            raise KeyError('password')    
+            raise KeyError('password')
     except KeyError as e:
         print(e)
         return JsonResponse({'erro': "Parâmetro " + str(e) + " não recebido"})
@@ -171,6 +182,7 @@ def get_centrais_inativas(request):
     print(saida)
     return JsonResponse(saida, safe=False)
 
+
 @method_decorator(csrf_exempt, name='dispatch')
 def inativar(request, central_id):
     if(request.method != 'POST'):
@@ -184,7 +196,7 @@ def inativar(request, central_id):
             raise KeyError('password')
     except KeyError as e:
         print(e)
-        return JsonResponse(status=400, data={'erro': "Parâmetro " + str(e) + " não recebido"})    
+        return JsonResponse(status=400, data={'erro': "Parâmetro " + str(e) + " não recebido"})
     # Autenticação
     try:
         user = authenticate(request, username=username, password=password)
@@ -197,9 +209,9 @@ def inativar(request, central_id):
         central = Central.objects.get(id=central_id, is_active=True)
         central.is_active = False
         central.save()
-        return JsonResponse({'sucesso':'A central foi inativada'})
+        return JsonResponse({'sucesso': 'A central foi inativada'})
     except Central.DoesNotExist:
-        return JsonResponse(status=400, data={'erro':'nenhuma central ativa com esse identificador'})
+        return JsonResponse(status=400, data={'erro': 'nenhuma central ativa com esse identificador'})
     except Exception as e:
         return JsonResponse(status=400, data={'erro': str(e)})
 
@@ -217,7 +229,7 @@ def reativar(request, central_id):
             raise KeyError('password')
     except KeyError as e:
         print(e)
-        return JsonResponse(status=400, data={'erro': "Parâmetro " + str(e) + " não recebido"})    
+        return JsonResponse(status=400, data={'erro': "Parâmetro " + str(e) + " não recebido"})
     # Autenticação
     try:
         user = authenticate(request, username=username, password=password)
@@ -232,6 +244,6 @@ def reativar(request, central_id):
         central.save()
         return novo_certificado(central)
     except Central.DoesNotExist:
-        return JsonResponse(status=400, data={'erro':'nenhuma central inativa com esse identificador'})
+        return JsonResponse(status=400, data={'erro': 'nenhuma central inativa com esse identificador'})
     except Exception as e:
         return JsonResponse(status=400, data={'erro': str(e)})
