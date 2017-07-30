@@ -7,7 +7,7 @@ import subprocess
 from subprocess import CalledProcessError
 from django.conf import settings
 from os import remove
-
+from time import sleep
 class User(AbstractUser):
     pass
 
@@ -124,6 +124,11 @@ class Certificado(models.Model):
             self.is_revoked = True
             self.save()
             remove(settings.SSL_DIR+"/certs/"+str(self.certName)+".client.crt")
+            # Reinicia mosquitto
+            print('restart mosquitto')
+            print(subprocess.check_call(['sudo', '/bin/systemctl', 'stop', 'mosquitto']))
+            sleep(1)
+            print(subprocess.check_call(['sudo', '/bin/systemctl', 'start', 'mosquitto']))
             return True
         except CalledProcessError as e:
             if(e.returncode == 1):
