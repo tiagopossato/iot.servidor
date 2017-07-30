@@ -1,0 +1,22 @@
+[Unit]
+SourcePath=/etc/init.d/mosquitto
+Description=LSB: mosquitto MQTT v3.1 message broker
+Before=shutdown.target
+After=remote-fs.target systemd-journald-dev-log.socket
+Conflicts=shutdown.target
+
+[Service]
+Type=forking
+Restart=on-failure
+#TimeoutSec=1min
+IgnoreSIGPIPE=no
+KillMode=process
+GuessMainPID=no
+RemainAfterExit=yes
+ExecStart=/etc/init.d/mosquitto start
+ExecStop=/etc/init.d/mosquitto stop
+ExecReload=/etc/init.d/mosquitto reload
+
+[Install]
+WantedBy=multi-user.target
+
