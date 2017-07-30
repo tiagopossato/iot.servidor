@@ -1,0 +1,4 @@
+Criar o arquivo "/etc/sudoers.d/servidor" com o seguinte conteúdo:
+# Inicio
+usuario ALL=(ALL) NOPASSWD: /bin/systemctl stop mosquitto, /bin/systemctl start mosquitto
+# Fim

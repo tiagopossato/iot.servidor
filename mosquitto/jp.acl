@@ -1,0 +1,5 @@
+user %u
+pattern write /central/%u/ambiente/+/grandeza/+/sensor/+
+
+user servidor
+topic read /central/#
