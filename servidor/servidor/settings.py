@@ -23,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'p50=e883xpm4m^molbyz-6-0jd3*g$p5k(#fbny5xna@m-9%3o'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
     '[::1]',
@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
+    # 'django.contrib.staticfiles',
     # 'mqtt',
     'manutencao',
     'sentinela',
@@ -84,16 +84,25 @@ WSGI_APPLICATION = 'servidor.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': 'sentinela-dev1',
+#         'USER': 'sistema',
+#         'PASSWORD': 'sistema',
+#         'HOST': '127.0.0.1',
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'sentinela-dev1',
-        'USER': 'sistema',
-        'PASSWORD': 'sistema',
-        'HOST': '127.0.0.1',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'OPTIONS': {
+            'timeout': 30,
+        },
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
@@ -131,4 +140,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
-STATIC_URL = '/static/'
+# this folder is used to collect static files in production. not used in development
+STATIC_ROOT = os.path.join(BASE_DIR,'static')
+STATIC_URL =  "/static/"
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]
