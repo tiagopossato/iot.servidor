@@ -2,8 +2,9 @@ import os
 import sys
 import django
 import paho.mqtt.client as mqttClient
+from time import sleep
 
-sys.path.insert(0, os.path.abspath(os.path.join(__file__ ,"../..")))
+sys.path.insert(0, os.path.abspath(os.path.join(__file__ ,"../../..")))
 os.environ["DJANGO_SETTINGS_MODULE"] = "servidor.settings"
 django.setup()
 
@@ -21,18 +22,38 @@ def onConnect(client, userdata, flags, rc):
 # The callback for when a PUBLISH message is received from the server.
 def onMessage(client, userdata, msg):
     try:
-        topico = msg.topic
-        #usuario = msg.topic.split('/')[-1]
+        topico = msg.topic.split('/')
+        # print(topico)
         packet = msg.payload.decode('utf-8')
-#        print(topico + ": " + packet)
-        message = eval(packet)
+        # print(packet)
+        mensagem = eval(packet)
+        # print(mensagem)
+        message = {
+            'valor': mensagem['valor'],
+            'createdAt': mensagem['createdAt'],
+            'central': topico[2],
+            'ambiente': topico[4],
+            'grandeza': topico[6],
+            'sensor': topico[8]
+        }
+
         print(message)
     except Exception as e:
         print(e)
 
 def onDisconnect(client, userdata, rc):
-    client.reconnect()
-
+    error = True
+    while(error):
+        try:
+            client.reconnect()
+            error = False
+        except Exception as e:
+            if(e.errno == 111):
+                print("Conexao recusada")
+            else:
+                print(dir(e))
+                print(e)
+            sleep(.001)
 def conecta():
     nome = 'servidor' 
     
