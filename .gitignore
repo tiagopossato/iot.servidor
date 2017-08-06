@@ -102,3 +102,4 @@ ENV/
 servidor/static
 *.sqlite3
 *migrations*
+servidor/mqtt/servico/logs.csv

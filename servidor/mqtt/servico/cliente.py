@@ -8,6 +8,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(__file__ ,"../../..")))
 os.environ["DJANGO_SETTINGS_MODULE"] = "servidor.settings"
 django.setup()
 
+from manutencao.log import log
+
 def onConnect(client, userdata, flags, rc):
     print("Connected with result code "+str(rc))
     if(rc==5):
@@ -28,20 +30,37 @@ def onMessage(client, userdata, msg):
         # print(packet)
         mensagem = eval(packet)
         # print(mensagem)
-        message = {
-            'valor': mensagem['valor'],
-            'createdAt': mensagem['createdAt'],
-            'central': topico[2],
-            'ambiente': topico[4],
-            'grandeza': topico[6],
-            'sensor': topico[8]
-        }
-
+        if(topico[7] == 'sensor'):
+            print('-------------NOVA LEITURA-------------')
+            message = {
+                'central': topico[2],
+                'ambiente': topico[4],
+                'grandeza': topico[6],
+                'sensor': topico[8],
+                'valor': mensagem['valor'],
+                'createdAt': mensagem['createdAt']
+            }
+        if(topico[7] == 'alarme'):
+            print('-------------ALARME-------------')
+            message = {
+                'central': topico[2],
+                'ambiente': topico[4],
+                'grandeza': topico[6],
+                'codigoAlarme': topico[8],
+                'uid': mensagem['uid'],
+                'mensagem': mensagem['mensagem'],
+                'prioridade': mensagem['prioridade'],
+                'ativo': mensagem['ativo'],
+                'tempoAtivacao': mensagem['tempoAtivacao'],
+                'tempoInativacao': mensagem['tempoInativacao'] if mensagem['tempoInativacao'] else None
+            }
+        
         print(message)
     except Exception as e:
         print(e)
 
 def onDisconnect(client, userdata, rc):
+    log('MQTT', 'Conexão com o broker perdida')
     error = True
     while(error):
         try:
@@ -49,11 +68,12 @@ def onDisconnect(client, userdata, rc):
             error = False
         except Exception as e:
             if(e.errno == 111):
-                print("Conexao recusada")
+                # print("Conexao recusada")
+                pass
             else:
                 print(dir(e))
                 print(e)
-            sleep(.001)
+            sleep(.01)
 def conecta():
     nome = 'servidor' 
     
