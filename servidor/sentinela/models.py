@@ -262,5 +262,6 @@ class Leitura(models.Model):
         return str(self.valor) + " " + str(self.grandeza.unidade)
 
     class Meta:
+        unique_together = ('sensor', 'ambiente','created_at')
         verbose_name = 'Leitura'
         verbose_name_plural = 'Leituras'

@@ -6,6 +6,7 @@ from time import sleep
 import uuid
 from distutils.util import strtobool
 import datetime
+from django.utils import timezone
 
 sys.path.insert(0, os.path.abspath(os.path.join(__file__ ,"../../..")))
 os.environ["DJANGO_SETTINGS_MODULE"] = "servidor.settings"
@@ -13,6 +14,7 @@ django.setup()
 
 from manutencao.log import log
 from sentinela.models import Alarme, Leitura
+from servidor.settings import TIME_ZONE
 
 def onConnect(client, userdata, flags, rc):
     print("Connected with result code "+str(rc))
@@ -42,7 +44,7 @@ def onMessage(client, userdata, msg):
                 'grandeza': int(topico[6]),
                 'sensor': uuid.UUID(topico[8]),
                 'valor': float(mensagem['valor']),
-                'created_at': datetime.datetime.fromtimestamp(float(mensagem['createdAt']))
+                'created_at': timezone.make_aware(datetime.datetime.fromtimestamp(float(mensagem['createdAt'])), timezone=timezone.get_current_timezone())
             }
             # print(message)
             leitura = Leitura(
@@ -67,8 +69,8 @@ def onMessage(client, userdata, msg):
                 'mensagemAlarme': mensagem['mensagem'],
                 'prioridadeAlarme': int(mensagem['prioridade']),
                 'ativo': mensagem['ativo'],
-                'tempoAtivacao': datetime.datetime.fromtimestamp(float(mensagem['tempoAtivacao'])),
-                'tempoInativacao': datetime.datetime.fromtimestamp(float(mensagem['tempoInativacao'])) if mensagem['tempoInativacao'] else None
+                'tempoAtivacao': timezone.make_aware(datetime.datetime.fromtimestamp(float(mensagem['tempoAtivacao'])), timezone=timezone.get_current_timezone()),
+                'tempoInativacao': timezone.make_aware(datetime.datetime.fromtimestamp(float(mensagem['tempoInativacao'])), timezone=timezone.get_current_timezone()) if mensagem['tempoInativacao'] else None
             }
 
             alarme = Alarme(uid=message['uid'],
@@ -85,7 +87,7 @@ def onMessage(client, userdata, msg):
             alarme.save()
             print(alarme)
     except Exception as e:
-        print(e)
+        log('MQTT', str(e))
 
 def onDisconnect(client, userdata, rc):
     log('MQTT', 'Conexão com o broker perdida')
