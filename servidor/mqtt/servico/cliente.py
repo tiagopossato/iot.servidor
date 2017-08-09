@@ -3,12 +3,16 @@ import sys
 import django
 import paho.mqtt.client as mqttClient
 from time import sleep
+import uuid
+from distutils.util import strtobool
+import datetime
 
 sys.path.insert(0, os.path.abspath(os.path.join(__file__ ,"../../..")))
 os.environ["DJANGO_SETTINGS_MODULE"] = "servidor.settings"
 django.setup()
 
 from manutencao.log import log
+from sentinela.models import Alarme, Leitura
 
 def onConnect(client, userdata, flags, rc):
     print("Connected with result code "+str(rc))
@@ -33,29 +37,53 @@ def onMessage(client, userdata, msg):
         if(topico[7] == 'sensor'):
             print('-------------NOVA LEITURA-------------')
             message = {
-                'central': topico[2],
-                'ambiente': topico[4],
-                'grandeza': topico[6],
-                'sensor': topico[8],
-                'valor': mensagem['valor'],
-                'createdAt': mensagem['createdAt']
+                'central': uuid.UUID(topico[2]),
+                'ambiente': uuid.UUID(topico[4]),
+                'grandeza': int(topico[6]),
+                'sensor': uuid.UUID(topico[8]),
+                'valor': float(mensagem['valor']),
+                'created_at': datetime.datetime.fromtimestamp(float(mensagem['createdAt']))
             }
+            # print(message)
+            leitura = Leitura(
+                valor=message['valor'],
+                ambiente=message['ambiente'],
+                created_at=message['created_at'],
+                grandeza_id=message['grandeza'],
+                sensor=message['sensor'],
+                central_id=message['central']
+            )
+            leitura.save()
+            print(leitura)
+
         if(topico[7] == 'alarme'):
             print('-------------ALARME-------------')
             message = {
-                'central': topico[2],
-                'ambiente': topico[4],
-                'grandeza': topico[6],
-                'codigoAlarme': topico[8],
-                'uid': mensagem['uid'],
-                'mensagem': mensagem['mensagem'],
-                'prioridade': mensagem['prioridade'],
+                'central': uuid.UUID(topico[2]),
+                'ambiente': uuid.UUID(topico[4]),
+                'grandeza': int(topico[6]),
+                'codigoAlarme': uuid.UUID(topico[8]),
+                'uid':uuid.UUID(mensagem['uid']),
+                'mensagemAlarme': mensagem['mensagem'],
+                'prioridadeAlarme': int(mensagem['prioridade']),
                 'ativo': mensagem['ativo'],
-                'tempoAtivacao': mensagem['tempoAtivacao'],
-                'tempoInativacao': mensagem['tempoInativacao'] if mensagem['tempoInativacao'] else None
+                'tempoAtivacao': datetime.datetime.fromtimestamp(float(mensagem['tempoAtivacao'])),
+                'tempoInativacao': datetime.datetime.fromtimestamp(float(mensagem['tempoInativacao'])) if mensagem['tempoInativacao'] else None
             }
-        
-        print(message)
+
+            alarme = Alarme(uid=message['uid'],
+                            codigoAlarme=message['codigoAlarme'],
+                            mensagemAlarme=message['mensagemAlarme'],
+                            prioridadeAlarme=message['prioridadeAlarme'],
+                            ativo=message['ativo'],
+                            tempoAtivacao=message['tempoAtivacao'],
+                            tempoInativacao=message['tempoInativacao'],
+                            ambiente=message['ambiente'],
+                            grandeza_id=message['grandeza'],
+                            central_id=message['central']
+                            )
+            alarme.save()
+            print(alarme)
     except Exception as e:
         print(e)
 

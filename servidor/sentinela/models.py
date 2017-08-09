@@ -166,6 +166,8 @@ class Certificado(models.Model):
             log("CERT02.2",str(e))
 
 class Central(models.Model):
+
+
     """
     Modelo para representar as centrais do sistema
     """
@@ -206,3 +208,59 @@ class Central(models.Model):
         unique_together = ('descricao', 'empresa',)
         verbose_name = 'Central'
         verbose_name_plural = 'Centrais'
+
+class Grandeza(models.Model):
+    codigo = models.IntegerField(primary_key=True)
+    nome = models.CharField(max_length=255, null=False, unique=True)
+    unidade = models.CharField(max_length=15, null=False, unique=True)
+    created_at = models.DateTimeField("Criado em", default=now)
+    updated_at = models.DateTimeField("Alterado em", auto_now=True)
+    
+    def __str__(self):
+        return str(self.unidade) + ' (' + str(self.nome) + ')'
+
+    class Meta:
+        verbose_name = 'Grandeza'
+        verbose_name_plural = 'Grandezas'
+
+class Alarme(models.Model):
+    uid = models.UUIDField(primary_key=True)
+    codigoAlarme = models.UUIDField('Codigo')
+    mensagemAlarme = models.CharField('Mensagem',max_length=255, null=False)
+    prioridadeAlarme = models.IntegerField('Prioridade',null=False)
+    ativo = models.BooleanField('Ativo',default=False, null=False)
+    reconhecido = models.BooleanField('Reconhecido',default=False, null=False)
+    tempoAtivacao = models.DateTimeField('Ativado em',null=False)
+    tempoInativacao = models.DateTimeField('Desativado em',null=True)
+
+    ambiente = models.UUIDField('Ambiente')
+    grandeza = models.ForeignKey(
+        Grandeza, to_field='codigo', on_delete=models.PROTECT)
+
+    central = models.ForeignKey(
+        Central, to_field='id', on_delete=models.PROTECT)
+
+    def __str__(self):
+        return self.mensagemAlarme + '[' + ('Ativo' if self.ativo else 'Inativo') + ']'
+
+    class Meta:
+        verbose_name = 'Alarme'
+        verbose_name_plural = 'Alarmes'
+
+
+class Leitura(models.Model):
+    valor = models.FloatField('Valor')
+    sensor = models.UUIDField('Sensor')
+    ambiente = models.UUIDField('Ambiente')
+    created_at = models.DateTimeField("Criado em", null=False)
+    grandeza = models.ForeignKey(
+        Grandeza, to_field='codigo', on_delete=models.PROTECT)
+    central = models.ForeignKey(
+        Central, to_field='id', on_delete=models.PROTECT)
+
+    def __str__(self):
+        return str(self.valor) + " " + str(self.grandeza.unidade)
+
+    class Meta:
+        verbose_name = 'Leitura'
+        verbose_name_plural = 'Leituras'
