@@ -8,6 +8,7 @@ from subprocess import CalledProcessError
 from django.conf import settings
 from os import remove
 from time import sleep
+
 class User(AbstractUser):
     pass
 
