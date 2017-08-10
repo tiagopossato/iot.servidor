@@ -29,7 +29,8 @@ ALLOWED_HOSTS = [
     '[::1]',
     '127.0.0.1',
     'localhost',
-    'mqtt-hub.nectar.videira.ifc.edu.br',
+    'nectar.videira.ifc.edu.br',
+    '200.135.55.25'
 ]
 
 AUTH_USER_MODEL = 'sentinela.User'
@@ -44,7 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    # 'django.contrib.staticfiles',
+    'django.contrib.staticfiles',
     'manutencao',
     'sentinela',
 ]
@@ -140,8 +141,5 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 # this folder is used to collect static files in production. not used in development
-STATIC_ROOT = os.path.join(BASE_DIR,'static')
+STATIC_ROOT = '/var/www/static'
 STATIC_URL =  "/static/"
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "static"),
-]
