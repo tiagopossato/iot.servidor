@@ -85,7 +85,7 @@ chmod 0755 /opt/iot.servidor
 chmod 0700 /opt/iot.servidor/servidor -R
 
 # Os usuarios do grupo www-data também podem escrever na pasta de log
-chown central:www-data /opt/iot.servidor/log -R
+chown servidor:www-data /opt/iot.servidor/log -R
 # Todos os usuarios podem visualizar os arquivos de log
 chmod 0775 /opt/iot.servidor/log -R
 # Somente o usuario www-data pode acessar a pasta de arquivos estaticos
@@ -96,7 +96,7 @@ cp servidor.conf /etc/supervisor/conf.d/servidor.conf
 
 supervisorctl reload
 
-echo "servidor ALL=(ALL) NOPASSWD: /bin/systemctl stop mosquitto, /bin/systemctl start mosquitto" > /etc/sudoers.d/central
+echo "servidor ALL=(ALL) NOPASSWD: /bin/systemctl stop mosquitto, /bin/systemctl start mosquitto" > /etc/sudoers.d/servidor
 
 echo "....Configurando nginx para servir os arquivos estaticos"
 cp servidor_nginx.conf /etc/nginx/sites-available

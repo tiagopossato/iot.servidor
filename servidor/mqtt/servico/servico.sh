@@ -1,5 +1,7 @@
 #!/bin/bash
 
-source /home/debian/.virtualenvs/servidor/bin/activate
+source /etc/profile
+
+workon servidorvenv
 
 python3 cliente.py

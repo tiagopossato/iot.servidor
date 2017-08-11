@@ -13,7 +13,7 @@ echo "Starting $NAME as `whoami`"
 # Activate the virtual environment
 cd $DJANGODIR  
 source /etc/profile
-workon centralvenv
+workon servidorvenv
 
 export DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE  
 export PYTHONPATH=$DJANGODIR:$PYTHONPATH
