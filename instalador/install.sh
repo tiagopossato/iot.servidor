@@ -8,6 +8,13 @@ if [ "$(id -u)" != "0" ]; then
 	exit 1
 fi
 
+# Dependencias
+#verifica a existencia da pasta da CA
+if [ -d /etc/ssl/servidor ]; then
+	echo "Crie a estrutura do CA antes de instalar o servidor"
+	exit 1
+fi
+
 diretorio=$(pwd)
 
 #instala as dependencias
@@ -35,7 +42,7 @@ workon servidorvenv
 pip3 install -r requirements.txt
 
 #cria usuario sem grupo e nem login
-useradd -g nogroup -M -r -s /usr/sbin/nologin servidor
+useradd -g www-data -M -r -s /usr/sbin/nologin servidor
 
 echo
 echo
@@ -44,6 +51,9 @@ echo "Criar usuario para acesso remoto"
 echo
 echo
 echo
+
+#altera as permissoes do diretório da CA
+chown servidor:www-data /etc/ssl/servidor -r
 
 #verifica se já existe uma instalação
 if [ -d /opt/iot.servidor ]; then
@@ -91,7 +101,7 @@ chmod 0775 /opt/iot.servidor/log -R
 # Somente o usuario www-data pode acessar a pasta de arquivos estaticos
 chown www-data:www-data /var/www/static
 
-cp receptor.conf /etc/supervisor/conf.d/receptor.conf
+#cp receptor.conf /etc/supervisor/conf.d/receptor.conf
 cp servidor.conf /etc/supervisor/conf.d/servidor.conf
 
 supervisorctl reload
